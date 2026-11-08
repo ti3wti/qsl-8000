@@ -179,9 +179,11 @@ const $ = s => document.querySelector(s);
 // ---------------- estado ----------------
 const hoyLocal = () => { const d = new Date(); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); };
 function p2(n) { return String(n).padStart(2, '0'); }
-let S = { cfg: { url: '', clave: 'TI8000', fecha: '', auto: true }, est: [], act: 0, qsos: [] };
+const URL_API = 'https://script.google.com/macros/s/AKfycbwZsxXCBdg756LCgKe0025Q5_pfuh8ZiTFf5gL1nqExz-jNACJ5Q3tPT-OKGt4FDlXr3Q/exec';
+let S = { cfg: { url: URL_API, clave: 'TI8000', fecha: '', auto: true }, est: [], act: 0, qsos: [] };
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
 // La fecha sigue al día actual salvo que se haya fijado a mano en ⚙
+if (!S.cfg.url) S.cfg.url = URL_API;
 if (!S.cfg.fecha || !S.cfg.fechaFija) S.cfg.fecha = hoyLocal();
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('No se pudo guardar en la tablet'); } }
 

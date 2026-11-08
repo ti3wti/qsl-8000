@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>QSL 8000 TI</title>
+<meta name="theme-color" content="#2b1d13">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#1f150e; --panel:#2e2016; --panel2:#3a2a1d; --line:#5a4330;
+  --gold:#e3b860; --gold2:#f5d98c; --cream:#f6ead2; --muted:#bfa784;
+  --ok:#7fc77a; --warn:#f0b64a; --bad:#e2725b; --blue:#5b8de0;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--cream);font:17px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+input{font:inherit}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(#2b1d13,#241810);border-bottom:2px solid var(--line)}
+.top{display:flex;align-items:center;gap:12px;padding:10px 14px 6px}
+.top h1{margin:0;font-size:19px;color:var(--gold2);letter-spacing:.5px;white-space:nowrap}
+.top .meta{color:var(--muted);font-size:14px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--bad);flex:none}
+.dot.on{background:var(--ok)}
+.iconbtn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:18px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:6px 12px 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;background:var(--panel);border:2px solid var(--line);font-weight:700;letter-spacing:.5px;font-size:18px}
+.tab .n{background:var(--panel2);color:var(--muted);border-radius:20px;padding:1px 9px;font-size:14px;font-weight:600}
+.tab .p{color:var(--warn);font-size:13px}
+.tab.act{background:linear-gradient(#f0cd7d,#c9963f);color:#24170c;border-color:#f5d98c}
+.tab.act .n{background:#2b1d1366;color:#24170c}
+.tab.add{color:var(--gold2);border-style:dashed;font-size:22px;padding:8px 18px}
+main{padding:14px;max-width:1100px;margin:0 auto 110px}
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:19px}
+.empty b{color:var(--gold2)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.lbl{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.freqs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.fb{padding:16px 6px;border-radius:12px;background:var(--panel2);border:2px solid var(--line);font-size:20px;font-weight:700}
+.fb small{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:1px}
+.fb.sel{background:linear-gradient(#f0cd7d,#c9963f);border-color:#fff1c4;color:#1d1209;box-shadow:0 0 0 3px #f5d98c55}
+.fb.sel small{color:#3b2812}
+.row{display:grid;grid-template-columns:1.4fr 1fr auto;gap:12px;align-items:end}
+.field input{width:100%;padding:14px 14px;font-size:28px;font-weight:700;letter-spacing:1px;border-radius:12px;border:2px solid var(--line);background:#160f09;color:var(--gold2);outline:none;text-transform:uppercase}
+.field input:focus{border-color:var(--gold)}
+.timewrap{display:flex;gap:8px}
+.timewrap input{min-width:0}
+.now{padding:0 16px;border-radius:12px;background:var(--panel2);border:2px solid var(--line);font-weight:700;color:var(--gold2)}
+.utc{font-size:14px;color:var(--muted);margin-top:6px;min-height:19px}
+.utc b{color:var(--cream)}
+.go{height:64px;padding:0 26px;border-radius:12px;background:linear-gradient(#7fc77a,#4f9a4b);color:#0d1f0c;font-weight:800;font-size:20px}
+.go.edit{background:linear-gradient(#f0cd7d,#c9963f);color:#24170c}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:0}
+.sug{padding:8px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);text-align:left}
+.sug b{font-size:18px;color:var(--gold2);letter-spacing:.5px}
+.sug span{display:block;font-size:12px;color:var(--muted)}
+.editbar{display:none;align-items:center;justify-content:space-between;background:#4a3518;border:1px solid var(--gold);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.editbar.on{display:flex}
+.editbar button{background:var(--panel2);padding:6px 12px;border-radius:8px}
+.list .q{display:grid;grid-template-columns:1.2fr 1.3fr .9fr auto;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid #4a3828}
+.list .q:last-child{border-bottom:0}
+.q .c{font-size:21px;font-weight:800;color:var(--gold2);letter-spacing:.5px}
+.q .t{font-size:15px}
+.q .t small{color:var(--muted)}
+.q .f{font-size:15px;color:var(--muted)}
+.q .a{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.q .a button{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:16px}
+.st{font-size:13px;font-weight:700;padding:3px 8px;border-radius:20px}
+.st.pend{background:#5a4210;color:var(--warn)}
+.st.ok{background:#1d3a1b;color:var(--ok)}
+.q.del .c,.q.del .t,.q.del .f{text-decoration:line-through;opacity:.55}
+footer{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#241810f2;border-top:2px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center}
+footer .info{flex:1;font-size:15px;color:var(--muted)}
+footer .info b{color:var(--cream);font-size:17px}
+footer .pend b{color:var(--warn)}
+.send{padding:14px 20px;border-radius:12px;background:linear-gradient(#6d9ce8,#3d6fc4);color:#fff;font-weight:800}
+.send:disabled{opacity:.4}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:flex-start;justify-content:center;z-index:20;padding:40px 14px;overflow:auto}
+.modal.on{display:flex}
+.box{background:var(--panel);border:1px solid var(--gold);border-radius:16px;padding:18px;width:100%;max-width:640px}
+.box h2{margin:0 0 12px;color:var(--gold2);font-size:21px}
+.box label{display:block;font-size:13px;color:var(--muted);letter-spacing:.5px;margin:12px 0 4px}
+.box input[type=text],.box input[type=url],.box input[type=date],.box input[type=password]{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:#160f09;color:var(--cream);font-size:17px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.btn{padding:12px 16px;border-radius:10px;background:var(--panel2);border:1px solid var(--line)}
+.btn.pri{background:linear-gradient(#f0cd7d,#c9963f);color:#24170c;font-weight:800;border:0}
+.btn.bad{background:#5a2218;border-color:#8a3a2a}
+.sw{display:flex;align-items:center;gap:10px;margin-top:12px}
+.sw input{width:24px;height:24px}
+.msg{font-size:14px;color:var(--muted);margin-top:8px;word-break:break-all}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#111;border:1px solid var(--gold);color:var(--cream);padding:12px 18px;border-radius:12px;z-index:30;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+@media (max-width:720px){
+  .row{grid-template-columns:1fr}
+  .go{width:100%}
+  .freqs{grid-template-columns:repeat(2,1fr)}
+  .list .q{grid-template-columns:1fr 1fr;row-gap:4px}
+  .q .a{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <span class="dot" id="dot" title="Conexión"></span>
+    <h1>QSL Edición 8000</h1>
+    <div class="meta" id="meta"></div>
+    <button class="iconbtn" id="btnCfg" aria-label="Configuración">⚙</button>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+
+<main id="main"></main>
+
+<footer>
+  <div class="info" id="foot"></div>
+  <button class="send" id="btnSendAll">Enviar todas</button>
+</footer>
+
+<!-- Agregar operador -->
+<div class="modal" id="mOp">
+  <div class="box">
+    <h2>Agregar operador de la activación</h2>
+    <div class="field"><input id="opIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Indicativo"></div>
+    <div class="sugs" id="opSugs"></div>
+    <div class="btns">
+      <button class="btn pri" id="opAdd">Agregar</button>
+      <button class="btn" data-close>Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Configuración -->
+<div class="modal" id="mCfg">
+  <div class="box">
+    <h2>Configuración</h2>
+    <label>URL de la aplicación web (Apps Script)</label>
+    <input type="url" id="cUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    <label>Clave</label>
+    <input type="text" id="cClave" autocapitalize="characters">
+    <label>Fecha de la activación (local)</label>
+    <input type="date" id="cFecha">
+    <div class="sw"><input type="checkbox" id="cAuto"><span>Enviar automáticamente cuando haya internet</span></div>
+    <div class="btns">
+      <button class="btn pri" id="cSave">Guardar</button>
+      <button class="btn" id="cTest">Probar conexión</button>
+      <button class="btn" data-close>Cerrar</button>
+    </div>
+    <div class="msg" id="cMsg"></div>
+    <h2 style="margin-top:22px">Respaldo</h2>
+    <div class="btns">
+      <button class="btn" id="bJson">Exportar respaldo (JSON)</button>
+      <button class="btn" id="bCsv">Exportar bitácora (CSV)</button>
+      <button class="btn" id="bImp">Importar respaldo</button>
+      <input type="file" id="fImp" accept=".json,application/json" hidden>
+      <button class="btn" id="bResend">Marcar todo para reenviar</button>
+      <button class="btn bad" id="bWipe">Borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="indicativos.js"></script>
+<script>
+'use strict';
+const OFFSET_UTC = 6;   // Costa Rica: UTC = local + 6 h
+const FREQS = [['146.440', 'Simplex'], ['147.000', 'Rep. Heredia'], ['147.150', 'Rep. Nacional']];
+const KEY = 'qsl8000';
+const $ = s => document.querySelector(s);
+
+// ---------------- estado ----------------
+const hoyLocal = () => { const d = new Date(); return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); };
+function p2(n) { return String(n).padStart(2, '0'); }
+let S = { cfg: { url: '', clave: 'TI8000', fecha: '', auto: true }, est: [], act: 0, qsos: [] };
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+// La fecha sigue al día actual salvo que se haya fijado a mano en ⚙
+if (!S.cfg.fecha || !S.cfg.fechaFija) S.cfg.fecha = hoyLocal();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('No se pudo guardar en la tablet'); } }
+
+// Configuración rápida por enlace: index.html#api=URL&clave=XXX
+(function () {
+  if (!location.hash) return;
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('api')) S.cfg.url = h.get('api');
+  if (h.get('clave')) S.cfg.clave = h.get('clave');
+  save(); history.replaceState(null, '', location.pathname);
+})();
+
+let editId = null;
+const form = { call: '', hora: '' };
+
+// ---------------- utilidades ----------------
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const up = s => (s || '').toUpperCase().replace(/\s+/g, '');
+function parseHora(s) {
+  const d = (s || '').replace(/\D/g, '');
+  if (d.length < 3 || d.length > 4) return null;
+  const h = +d.slice(0, d.length - 2), m = +d.slice(-2);
+  if (h > 23 || m > 59) return null;
+  return p2(h) + ':' + p2(m);
+}
+function aUtc(fecha, hora) {
+  const [y, mo, d] = fecha.split('-').map(Number), [h, mi] = hora.split(':').map(Number);
+  const t = new Date(Date.UTC(y, mo - 1, d, h + OFFSET_UTC, mi));
+  return { fecha: t.getUTCFullYear() + '-' + p2(t.getUTCMonth() + 1) + '-' + p2(t.getUTCDate()),
+           hora: p2(t.getUTCHours()) + ':' + p2(t.getUTCMinutes()) };
+}
+function nombre(call) { const r = INDICATIVOS.find(x => x[0] === call); return r ? r[1] : ''; }
+function buscar(q, max) {
+  q = up(q); if (!q) return [];
+  const a = [], b = [];
+  for (const r of INDICATIVOS) {
+    if (r[0].startsWith(q)) a.push(r);
+    else if (r[0].includes(q)) b.push(r);
+    if (a.length >= max) break;
+  }
+  return a.concat(b).slice(0, max);
+}
+let tt;
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => e.classList.remove('on'), 2600); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const vivos = () => S.qsos.filter(q => !(q.borrado && q.estado === 'ok'));
+const pendientes = () => S.qsos.filter(q => q.estado === 'pend');
+
+// ---------------- render ----------------
+function renderHead() {
+  const [y, m, d] = S.cfg.fecha.split('-');
+  const nq = S.qsos.filter(q => !q.borrado).length;
+  const nest = new Set(S.qsos.filter(q => !q.borrado).map(q => q.call)).size;
+  $('#meta').textContent = `Fecha ${d}/${m}/${y} · ${nq} QSO · ${nest} estaciones`;
+  $('#dot').classList.toggle('on', navigator.onLine);
+
+  // pestañas
+  const tabs = S.est.map((e, i) => {
+    const qs = S.qsos.filter(q => q.op === e.call && !q.borrado).length;
+    const pe = S.qsos.filter(q => q.op === e.call && q.estado === 'pend').length;
+    return `<button class="tab ${i === S.act ? 'act' : ''}" data-tab="${i}">${esc(e.call)}<span class="n">${qs}</span>${pe ? `<span class="p">●${pe}</span>` : ''}</button>`;
+  }).join('');
+  $('#tabs').innerHTML = tabs + `<button class="tab add" id="tabAdd" aria-label="Agregar operador">＋</button>`;
+}
+function renderFoot() {
+  const np = pendientes().length;
+  $('#foot').innerHTML = `<span class="${np ? 'pend' : ''}">Pendientes de enviar: <b>${np}</b></span>` +
+    (S.cfg.url ? '' : ' · <span style="color:var(--bad)">Falta configurar la URL ⚙</span>');
+  $('#btnSendAll').disabled = !np || enviando;
+  $('#btnSendAll').textContent = enviando ? 'Enviando…' : 'Enviar todas';
+}
+/** Actualiza estado sin reconstruir el formulario (no interrumpe lo que se está digitando). */
+function renderLigero() { renderHead(); renderFoot(); if ($('#lista')) renderLista(); }
+
+function render() {
+  renderHead();
+  const main = $('#main');
+  if (!S.est.length) {
+    main.innerHTML = `<div class="empty">Toque <b>＋</b> para agregar el primer operador de la activación.<br><br>Cada operador tendrá su propia pestaña con su bitácora.</div>`;
+  } else {
+    const e = S.est[S.act];
+    const custom = e.freq && !FREQS.some(f => f[0] === e.freq);
+    main.innerHTML = `
+      <div class="card">
+        <div class="lbl"><span>Frecuencia de ${esc(e.call)}</span><button class="iconbtn" id="closeTab" style="font-size:13px;padding:5px 10px">Cerrar pestaña</button></div>
+        <div class="freqs">
+          ${FREQS.map(f => `<button class="fb ${e.freq === f[0] ? 'sel' : ''}" data-f="${f[0]}">${f[0]}<small>${f[1]}</small></button>`).join('')}
+          <button class="fb ${custom ? 'sel' : ''}" id="fOtra">${custom ? esc(e.freq) + ' ✎' : 'Otra'}<small>${custom ? 'Otra' : 'Digitar'}</small></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="editbar ${editId ? 'on' : ''}"><span>Editando QSO</span><button id="cancelEdit">Cancelar edición</button></div>
+        <div class="row">
+          <div class="field"><div class="lbl">Estación contactada</div>
+            <input id="inCall" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" placeholder="TI…" value="${esc(form.call)}"></div>
+          <div class="field"><div class="lbl">Hora local</div>
+            <div class="timewrap"><input id="inHora" type="text" inputmode="numeric" enterkeyhint="done" placeholder="1312" value="${esc(form.hora)}">
+            <button class="now" id="btnNow">Ahora</button></div>
+            <div class="utc" id="utc"></div></div>
+          <button class="go ${editId ? 'edit' : ''}" id="btnGo">${editId ? 'Guardar' : 'Registrar'}</button>
+        </div>
+        <div class="sugs" id="sugs"></div>
+      </div>
+      <div class="card list"><div class="lbl"><span>Bitácora de ${esc(e.call)}</span><span id="cnt"></span></div><div id="lista"></div></div>`;
+    renderLista(); renderUtc(); renderSugs();
+  }
+  renderFoot();
+}
+
+function renderLista() {
+  const e = S.est[S.act];
+  const qs = vivos().filter(q => q.op === e.call).sort((a, b) => (b.fechaUtc + b.horaUtc + b.ts).localeCompare(a.fechaUtc + a.horaUtc + a.ts));
+  $('#cnt').textContent = qs.filter(q => !q.borrado).length + ' QSO';
+  $('#lista').innerHTML = qs.length ? qs.map(q => `
+    <div class="q ${q.borrado ? 'del' : ''}">
+      <div class="c">${esc(q.call)}</div>
+      <div class="t">${q.horaLocal} <small>local</small> → <b>${q.horaUtc}</b> <small>UTC</small></div>
+      <div class="f">${esc(q.freq)} MHz</div>
+      <div class="a">
+        <span class="st ${q.estado}">${q.estado === 'ok' ? '✓ enviado' : (q.borrado ? '⏳ borrar' : '⏳ pendiente')}</span>
+        ${q.estado === 'pend' ? `<button data-send="${q.id}" title="Enviar este">⇪</button>` : ''}
+        ${q.borrado ? '' : `<button data-edit="${q.id}" title="Editar">✎</button><button data-del="${q.id}" title="Borrar">🗑</button>`}
+      </div>
+    </div>`).join('') : '<div class="empty" style="padding:20px">Sin QSO todavía.</div>';
+}
+
+function renderUtc() {
+  const el = $('#utc'); if (!el) return;
+  const h = parseHora(form.hora);
+  el.innerHTML = h ? `UTC: <b>${aUtc(S.cfg.fecha, h).hora}</b>` : (form.hora ? '<span style="color:var(--bad)">Hora inválida</span>' : 'Ej.: 1312 → 13:12');
+}
+
+function renderSugs() {
+  const el = $('#sugs'); if (!el) return;
+  const q = up(form.call);
+  const r = q.length >= 2 ? buscar(q, 8).filter(x => x[0] !== q) : [];
+  el.innerHTML = r.map(x => `<button class="sug" data-sug="${esc(x[0])}"><b>${esc(x[0])}</b><span>${esc(x[1] || '—')}</span></button>`).join('');
+}
+
+// ---------------- acciones ----------------
+function registrar() {
+  const e = S.est[S.act]; if (!e) return;
+  const call = up(form.call), hora = parseHora(form.hora);
+  if (!call || !/^[A-Z0-9]{1,4}[0-9][A-Z0-9\/\-]*$|^[A-Z0-9\/\-]{3,}$/.test(call)) { toast('Revise el indicativo'); $('#inCall').focus(); return; }
+  if (!hora) { toast('Revise la hora'); $('#inHora').focus(); return; }
+  if (!e.freq) { toast('Seleccione la frecuencia'); return; }
+  if (call === e.call) { toast('El contactado no puede ser el mismo operador'); return; }
+  const u = aUtc(S.cfg.fecha, hora);
+  if (editId) {
+    const q = S.qsos.find(x => x.id === editId);
+    Object.assign(q, { call, horaLocal: hora, fechaLocal: S.cfg.fecha, horaUtc: u.hora, fechaUtc: u.fecha, ver: q.ver + 1, estado: 'pend' });
+    editId = null; toast('QSO actualizado');
+  } else {
+    const dup = S.qsos.find(x => !x.borrado && x.op === e.call && x.call === call && x.freq === e.freq);
+    if (dup && !confirm(`${call} ya tiene QSO con ${e.call} en ${e.freq} (${dup.horaLocal}). ¿Registrar otro?`)) return;
+    S.qsos.push({ id: uid(), op: e.call, call, fechaLocal: S.cfg.fecha, horaLocal: hora, fechaUtc: u.fecha, horaUtc: u.hora,
+                  freq: e.freq, modo: 'FM', borrado: false, ver: 1, estado: 'pend', enviado: false, ts: Date.now() });
+    toast(`${call} registrado · ${u.hora} UTC`);
+  }
+  form.call = ''; form.hora = '';
+  save(); render(); $('#inCall').focus();
+  programarEnvio(1500);
+}
+
+function editar(id) {
+  const q = S.qsos.find(x => x.id === id); if (!q) return;
+  editId = id; form.call = q.call; form.hora = q.horaLocal.replace(':', '');
+  const e = S.est[S.act]; e.freq = q.freq;
+  render(); $('#inCall').focus();
+}
+
+function borrar(id) {
+  const q = S.qsos.find(x => x.id === id); if (!q) return;
+  if (!confirm(`¿Borrar el QSO de ${q.call} a las ${q.horaLocal}?`)) return;
+  if (!q.enviado) S.qsos = S.qsos.filter(x => x.id !== id);
+  else Object.assign(q, { borrado: true, ver: q.ver + 1, estado: 'pend' });
+  if (editId === id) { editId = null; form.call = ''; form.hora = ''; }
+  save(); render(); programarEnvio(1500);
+}
+
+function agregarOperador(call) {
+  call = up(call); if (!call) return;
+  let i = S.est.findIndex(e => e.call === call);
+  if (i < 0) { S.est.push({ call, freq: '' }); i = S.est.length - 1; }
+  S.act = i; editId = null; form.call = ''; form.hora = '';
+  save(); cerrar('#mOp'); render();
+  setTimeout(() => { const t = document.querySelector('.tab.act'); t && t.scrollIntoView({ inline: 'center', behavior: 'smooth' }); }, 50);
+}
+
+// ---------------- envío ----------------
+let enviando = false, timer = null;
+function programarEnvio(ms) { if (!S.cfg.auto) return; clearTimeout(timer); timer = setTimeout(() => enviar(), ms); }
+async function enviar(ids) {
+  if (enviando) return;
+  if (!S.cfg.url) { if (ids) toast('Configure la URL en ⚙'); return; }
+  const lote = pendientes().filter(q => !ids || ids.includes(q.id));
+  if (!lote.length) return;
+  if (!navigator.onLine) { if (ids) toast('Sin internet: queda pendiente'); return; }
+  enviando = true; renderLigero();
+  try {
+    const res = await fetch(S.cfg.url, { method: 'POST', body: JSON.stringify({ clave: S.cfg.clave, qsos: lote.map(q => ({
+      id: q.id, op: q.op, call: q.call, fechaLocal: q.fechaLocal, horaLocal: q.horaLocal, fechaUtc: q.fechaUtc,
+      horaUtc: q.horaUtc, freq: q.freq, modo: q.modo, borrado: q.borrado, ver: q.ver })) }) });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || 'Error del servidor');
+    const ok = new Set(j.aceptados);
+    S.qsos.forEach(q => {
+      const enLote = lote.find(x => x.id === q.id);
+      if (ok.has(q.id) && enLote && enLote.ver === q.ver) { q.estado = 'ok'; q.enviado = true; }
+    });
+    S.qsos = S.qsos.filter(q => !(q.borrado && q.estado === 'ok'));
+    save(); toast(`Enviados: ${ok.size}`);
+  } catch (err) {
+    toast('No se pudo enviar: ' + (err.message || err) + '. Queda pendiente.');
+  } finally {
+    enviando = false; renderLigero();
+  }
+}
+setInterval(() => { if (S.cfg.auto && pendientes().length && navigator.onLine) enviar(); }, 30000);
+addEventListener('online', () => { renderLigero(); programarEnvio(800); });
+addEventListener('offline', renderLigero);
+
+// ---------------- eventos ----------------
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('button'); if (!t) return;
+  if (t.dataset.tab != null) { S.act = +t.dataset.tab; editId = null; form.call = ''; form.hora = ''; save(); render(); return; }
+  if (t.id === 'tabAdd') { abrir('#mOp'); $('#opIn').value = ''; $('#opSugs').innerHTML = ''; setTimeout(() => $('#opIn').focus(), 50); return; }
+  if (t.dataset.f) { S.est[S.act].freq = t.dataset.f; save(); render(); $('#inCall') && $('#inCall').focus(); return; }
+  if (t.id === 'fOtra') {
+    const v = prompt('Frecuencia en MHz (ej. 145.590):', S.est[S.act].freq || '');
+    if (v && /^\d{1,4}(\.\d{1,4})?$/.test(v.trim())) { S.est[S.act].freq = (+v.trim()).toFixed(3); save(); render(); }
+    else if (v) toast('Frecuencia inválida');
+    return;
+  }
+  if (t.id === 'closeTab') {
+    const e = S.est[S.act];
+    if (!confirm(`¿Cerrar la pestaña de ${e.call}? Sus QSO se conservan y reaparecen si la vuelve a abrir.`)) return;
+    S.est.splice(S.act, 1); S.act = Math.max(0, S.act - 1); save(); render(); return;
+  }
+  if (t.id === 'btnNow') { const d = new Date(); if (!S.cfg.fechaFija && S.cfg.fecha !== hoyLocal()) { S.cfg.fecha = hoyLocal(); save(); renderHead(); } form.hora = p2(d.getHours()) + p2(d.getMinutes()); $('#inHora').value = form.hora; renderUtc(); $('#inCall').value ? $('#btnGo').focus() : $('#inCall').focus(); return; }
+  if (t.id === 'btnGo') { registrar(); return; }
+  if (t.id === 'cancelEdit') { editId = null; form.call = ''; form.hora = ''; render(); return; }
+  if (t.dataset.sug) { form.call = t.dataset.sug; $('#inCall').value = form.call; renderSugs(); $('#inHora').focus(); return; }
+  if (t.dataset.edit) { editar(t.dataset.edit); return; }
+  if (t.dataset.del) { borrar(t.dataset.del); return; }
+  if (t.dataset.send) { enviar([t.dataset.send]); return; }
+  if (t.dataset.op) { agregarOperador(t.dataset.op); return; }
+  if (t.id === 'opAdd') { agregarOperador($('#opIn').value); return; }
+  if (t.hasAttribute('data-close')) { cerrar('#' + t.closest('.modal').id); return; }
+  if (t.id === 'btnSendAll') { enviar(); return; }
+  if (t.id === 'btnCfg') { abrirCfg(); return; }
+  if (t.id === 'cSave') { guardarCfg(); return; }
+  if (t.id === 'cTest') { probar(); return; }
+  if (t.id === 'bJson') { descargar('respaldo_qsl8000_' + stamp() + '.json', JSON.stringify(S, null, 1), 'application/json'); return; }
+  if (t.id === 'bCsv') { exportarCsv(); return; }
+  if (t.id === 'bImp') { $('#fImp').click(); return; }
+  if (t.id === 'bResend') { if (confirm('¿Marcar todos los QSO como pendientes para volver a enviarlos?')) { S.qsos.forEach(q => { q.estado = 'pend'; }); save(); renderLigero(); } return; }
+  if (t.id === 'bWipe') {
+    if (confirm('¿Borrar TODOS los datos de esta tablet? (lo ya enviado queda en Google)') && confirm('¿Seguro? Esto no se puede deshacer.')) {
+      S.est = []; S.qsos = []; S.act = 0; save(); cerrar('#mCfg'); render();
+    }
+  }
+});
+
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if (t.id === 'inCall') { const p = t.selectionStart; t.value = t.value.toUpperCase(); t.setSelectionRange(p, p); form.call = t.value; renderSugs(); }
+  if (t.id === 'inHora') { form.hora = t.value; renderUtc(); }
+  if (t.id === 'opIn') {
+    t.value = t.value.toUpperCase();
+    $('#opSugs').innerHTML = buscar(t.value, 10).map(x => `<button class="sug" data-op="${esc(x[0])}"><b>${esc(x[0])}</b><span>${esc(x[1] || '—')}</span></button>`).join('');
+  }
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Enter') return;
+  if (ev.target.id === 'inCall') { ev.preventDefault(); $('#inHora').focus(); }
+  else if (ev.target.id === 'inHora') { ev.preventDefault(); registrar(); }
+  else if (ev.target.id === 'opIn') { ev.preventDefault(); agregarOperador(ev.target.value); }
+});
+$('#fImp').addEventListener('change', async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.qsos)) throw 0;
+    const ids = new Set(S.qsos.map(q => q.id)); let n = 0;
+    d.qsos.forEach(q => { if (!ids.has(q.id)) { S.qsos.push(q); n++; } });
+    (d.est || []).forEach(e => { if (!S.est.some(x => x.call === e.call)) S.est.push(e); });
+    save(); render(); toast(`Importados ${n} QSO`);
+  } catch (e) { toast('Archivo de respaldo inválido'); }
+  ev.target.value = '';
+});
+
+// ---------------- modales / config ----------------
+function abrir(id) { $(id).classList.add('on'); }
+function cerrar(id) { $(id).classList.remove('on'); }
+function abrirCfg() {
+  $('#cUrl').value = S.cfg.url; $('#cClave').value = S.cfg.clave; $('#cFecha').value = S.cfg.fecha; $('#cAuto').checked = S.cfg.auto;
+  $('#cMsg').textContent = ''; abrir('#mCfg');
+}
+function guardarCfg() {
+  const nueva = $('#cFecha').value || S.cfg.fecha;
+  S.cfg.url = $('#cUrl').value.trim(); S.cfg.clave = $('#cClave').value.trim(); S.cfg.auto = $('#cAuto').checked;
+  S.cfg.fecha = nueva; S.cfg.fechaFija = nueva !== hoyLocal();
+  save(); cerrar('#mCfg'); render(); toast('Configuración guardada'); programarEnvio(500);
+}
+async function probar() {
+  const url = $('#cUrl').value.trim(); const m = $('#cMsg');
+  if (!url) { m.textContent = 'Escriba la URL.'; return; }
+  m.textContent = 'Probando…';
+  try {
+    const j = await (await fetch(url)).json();
+    m.innerHTML = j.ok ? `✓ Conexión correcta.<br>Carpeta pública: <a style="color:var(--gold2)" href="${esc(j.carpeta)}" target="_blank" rel="noopener">${esc(j.carpeta)}</a>` : 'Respuesta inesperada.';
+  } catch (e) { m.textContent = '✗ No se pudo conectar: ' + (e.message || e); }
+}
+function stamp() { const d = new Date(); return d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '_' + p2(d.getHours()) + p2(d.getMinutes()); }
+function descargar(nombre, txt, tipo) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: tipo })); a.download = nombre;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function exportarCsv() {
+  const h = ['Operador', 'Contactado', 'Fecha local', 'Hora local', 'Fecha UTC', 'Hora UTC', 'Frecuencia', 'Modo', 'Estado'];
+  const rows = S.qsos.filter(q => !q.borrado).map(q => [q.op, q.call, q.fechaLocal, q.horaLocal, q.fechaUtc, q.horaUtc, q.freq, q.modo, q.estado === 'ok' ? 'enviado' : 'pendiente']);
+  descargar('bitacora_qsl8000_' + stamp() + '.csv', '﻿' + [h].concat(rows).map(r => r.join(',')).join('\r\n'), 'text/csv');
+}
+
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

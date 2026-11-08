@@ -170,6 +170,9 @@ footer .pend b{color:var(--warn)}
 'use strict';
 const OFFSET_UTC = 6;   // Costa Rica: UTC = local + 6 h
 const FREQS = [['146.440', 'Simplex'], ['147.000', 'Rep. Heredia'], ['147.150', 'Rep. Nacional']];
+const MODOS = [['FM', 'Radio'], ['EchoLink', 'Voz digital'], ['WhatsApp', 'Audio']];
+const modoDe = e => e.modo || 'FM';
+const descQ = q => q.modo === 'FM' || !q.modo ? q.freq + ' MHz' : q.modo;
 const KEY = 'qsl8000';
 const $ = s => document.querySelector(s);
 
@@ -263,11 +266,15 @@ function render() {
     const custom = e.freq && !FREQS.some(f => f[0] === e.freq);
     main.innerHTML = `
       <div class="card">
-        <div class="lbl"><span>Frecuencia de ${esc(e.call)}</span><button class="iconbtn" id="closeTab" style="font-size:13px;padding:5px 10px">Cerrar pestaña</button></div>
+        <div class="lbl"><span>Modo de ${esc(e.call)}</span><button class="iconbtn" id="closeTab" style="font-size:13px;padding:5px 10px">Cerrar pestaña</button></div>
+        <div class="freqs" style="grid-template-columns:repeat(3,1fr);margin-bottom:${modoDe(e) === 'FM' ? 14 : 0}px">
+          ${MODOS.map(m => `<button class="fb ${modoDe(e) === m[0] ? 'sel' : ''}" data-m="${m[0]}">${m[0] === 'FM' ? 'VHF FM' : m[0]}<small>${m[1]}</small></button>`).join('')}
+        </div>
+        ${modoDe(e) === 'FM' ? `<div class="lbl"><span>Frecuencia</span></div>
         <div class="freqs">
           ${FREQS.map(f => `<button class="fb ${e.freq === f[0] ? 'sel' : ''}" data-f="${f[0]}">${f[0]}<small>${f[1]}</small></button>`).join('')}
           <button class="fb ${custom ? 'sel' : ''}" id="fOtra">${custom ? esc(e.freq) + ' ✎' : 'Otra'}<small>${custom ? 'Otra' : 'Digitar'}</small></button>
-        </div>
+        </div>` : ''}
       </div>
       <div class="card">
         <div class="editbar ${editId ? 'on' : ''}"><span>Editando QSO</span><button id="cancelEdit">Cancelar edición</button></div>
@@ -296,7 +303,7 @@ function renderLista() {
     <div class="q ${q.borrado ? 'del' : ''}">
       <div class="c">${esc(q.call)}</div>
       <div class="t">${q.horaLocal} <small>local</small> → <b>${q.horaUtc}</b> <small>UTC</small></div>
-      <div class="f">${esc(q.freq)} MHz</div>
+      <div class="f">${esc(descQ(q))}</div>
       <div class="a">
         <span class="st ${q.estado}">${q.estado === 'ok' ? '✓ enviado' : (q.borrado ? '⏳ borrar' : '⏳ pendiente')}</span>
         ${q.estado === 'pend' ? `<button data-send="${q.id}" title="Enviar este">⇪</button>` : ''}
@@ -324,18 +331,19 @@ function registrar() {
   const call = up(form.call), hora = parseHora(form.hora);
   if (!call || !/^[A-Z0-9]{1,4}[0-9][A-Z0-9\/\-]*$|^[A-Z0-9\/\-]{3,}$/.test(call)) { toast('Revise el indicativo'); $('#inCall').focus(); return; }
   if (!hora) { toast('Revise la hora'); $('#inHora').focus(); return; }
-  if (!e.freq) { toast('Seleccione la frecuencia'); return; }
+  const modo = modoDe(e), freq = modo === 'FM' ? e.freq : '';
+  if (modo === 'FM' && !freq) { toast('Seleccione la frecuencia'); return; }
   if (call === e.call) { toast('El contactado no puede ser el mismo operador'); return; }
   const u = aUtc(S.cfg.fecha, hora);
   if (editId) {
     const q = S.qsos.find(x => x.id === editId);
-    Object.assign(q, { call, horaLocal: hora, fechaLocal: S.cfg.fecha, horaUtc: u.hora, fechaUtc: u.fecha, ver: q.ver + 1, estado: 'pend' });
+    Object.assign(q, { call, modo, freq, horaLocal: hora, fechaLocal: S.cfg.fecha, horaUtc: u.hora, fechaUtc: u.fecha, ver: q.ver + 1, estado: 'pend' });
     editId = null; toast('QSO actualizado');
   } else {
-    const dup = S.qsos.find(x => !x.borrado && x.op === e.call && x.call === call && x.freq === e.freq);
-    if (dup && !confirm(`${call} ya tiene QSO con ${e.call} en ${e.freq} (${dup.horaLocal}). ¿Registrar otro?`)) return;
+    const dup = S.qsos.find(x => !x.borrado && x.op === e.call && x.call === call && (x.modo || 'FM') === modo && x.freq === freq);
+    if (dup && !confirm(`${call} ya tiene QSO con ${e.call} por ${descQ(dup)} (${dup.horaLocal}). ¿Registrar otro?`)) return;
     S.qsos.push({ id: uid(), op: e.call, call, fechaLocal: S.cfg.fecha, horaLocal: hora, fechaUtc: u.fecha, horaUtc: u.hora,
-                  freq: e.freq, modo: 'FM', borrado: false, ver: 1, estado: 'pend', enviado: false, ts: Date.now() });
+                  freq, modo, borrado: false, ver: 1, estado: 'pend', enviado: false, ts: Date.now() });
     toast(`${call} registrado · ${u.hora} UTC`);
   }
   form.call = ''; form.hora = '';
@@ -346,7 +354,7 @@ function registrar() {
 function editar(id) {
   const q = S.qsos.find(x => x.id === id); if (!q) return;
   editId = id; form.call = q.call; form.hora = q.horaLocal.replace(':', '');
-  const e = S.est[S.act]; e.freq = q.freq;
+  const e = S.est[S.act]; e.modo = q.modo || 'FM'; if (e.modo === 'FM') e.freq = q.freq;
   render(); $('#inCall').focus();
 }
 
@@ -362,7 +370,7 @@ function borrar(id) {
 function agregarOperador(call) {
   call = up(call); if (!call) return;
   let i = S.est.findIndex(e => e.call === call);
-  if (i < 0) { S.est.push({ call, freq: '' }); i = S.est.length - 1; }
+  if (i < 0) { S.est.push({ call, freq: '', modo: 'FM' }); i = S.est.length - 1; }
   S.act = i; editId = null; form.call = ''; form.hora = '';
   save(); cerrar('#mOp'); render();
   setTimeout(() => { const t = document.querySelector('.tab.act'); t && t.scrollIntoView({ inline: 'center', behavior: 'smooth' }); }, 50);
@@ -406,6 +414,7 @@ document.addEventListener('click', ev => {
   const t = ev.target.closest('button'); if (!t) return;
   if (t.dataset.tab != null) { S.act = +t.dataset.tab; editId = null; form.call = ''; form.hora = ''; save(); render(); return; }
   if (t.id === 'tabAdd') { abrir('#mOp'); $('#opIn').value = ''; $('#opSugs').innerHTML = ''; setTimeout(() => $('#opIn').focus(), 50); return; }
+  if (t.dataset.m) { S.est[S.act].modo = t.dataset.m; save(); render(); $('#inCall') && $('#inCall').focus(); return; }
   if (t.dataset.f) { S.est[S.act].freq = t.dataset.f; save(); render(); $('#inCall') && $('#inCall').focus(); return; }
   if (t.id === 'fOtra') {
     const v = prompt('Frecuencia en MHz (ej. 145.590):', S.est[S.act].freq || '');

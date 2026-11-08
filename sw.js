@@ -1,5 +1,5 @@
 // Guarda la página en la tablet para que abra sin internet.
-const CACHE = 'qsl8000-v2';
+const CACHE = 'qsl8000-v3';
 const ARCHIVOS = ['./', './index.html', './indicativos.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
